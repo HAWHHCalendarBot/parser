@@ -87,10 +87,9 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
 
     apply_changes(
         &mut user_events,
-        content.config.changes,
+        &content.config.events,
         content.config.removed_events,
-    )
-    .context("failed to apply changes")?;
+    );
 
     for event in &mut user_events {
         if let Some(details) = content.config.events.get(&event.name) {
