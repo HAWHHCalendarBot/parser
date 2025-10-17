@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::Context as _;
-use chrono::{DateTime, FixedOffset};
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 use crate::generate_ics::{EventStatus, SoonToBeIcsEvent};
@@ -13,8 +13,8 @@ pub struct EventEntry {
     pub name: String,
     pub location: String,
     pub description: String,
-    pub start_time: DateTime<FixedOffset>,
-    pub end_time: DateTime<FixedOffset>,
+    pub start_time: NaiveDateTime,
+    pub end_time: NaiveDateTime,
 }
 
 pub const FOLDER: &str = "eventfiles";
@@ -32,8 +32,8 @@ pub fn read(name: &str) -> anyhow::Result<Vec<EventEntry>> {
 impl From<EventEntry> for SoonToBeIcsEvent {
     fn from(event: EventEntry) -> Self {
         Self {
-            start_time: event.start_time.naive_local(),
-            end_time: event.end_time.naive_local(),
+            start_time: event.start_time,
+            end_time: event.end_time,
             name: event.name.clone(),
             pretty_name: event.name,
             status: EventStatus::Confirmed,
@@ -46,8 +46,10 @@ impl From<EventEntry> for SoonToBeIcsEvent {
 
 #[test]
 fn can_deserialize_event_entry() -> Result<(), serde_json::Error> {
+    use chrono::NaiveDate;
+
     let test: EventEntry = serde_json::from_str(
-        r#"{"Name": "BTI1-TI", "Location": "1060", "Description": "Dozent: HTM", "StartTime": "2022-01-13T11:40:00+01:00", "EndTime": "2022-01-13T12:00:00+01:00"}"#,
+        r#"{"Name": "BTI1-TI", "Location": "1060", "Description": "Dozent: HTM", "StartTime": "2022-01-13T11:40:00", "EndTime": "2022-01-13T12:00:00"}"#,
     )?;
 
     assert_eq!(test.name, "BTI1-TI");
@@ -55,11 +57,17 @@ fn can_deserialize_event_entry() -> Result<(), serde_json::Error> {
     assert_eq!(test.description, "Dozent: HTM");
     assert_eq!(
         test.start_time,
-        DateTime::parse_from_rfc3339("2022-01-13T11:40:00+01:00").unwrap()
+        NaiveDate::from_ymd_opt(2022, 1, 13)
+            .unwrap()
+            .and_hms_opt(11, 40, 0)
+            .unwrap()
     );
     assert_eq!(
         test.end_time,
-        DateTime::parse_from_rfc3339("2022-01-13T12:00:00+01:00").unwrap()
+        NaiveDate::from_ymd_opt(2022, 1, 13)
+            .unwrap()
+            .and_hms_opt(12, 0, 0)
+            .unwrap()
     );
 
     Ok(())
