@@ -1,20 +1,14 @@
 #![expect(clippy::non_ascii_literal)]
 
-use std::collections::HashMap;
-
 use chrono::NaiveDateTime;
 
 use crate::generate_ics::{EventStatus, SoonToBeIcsEvent};
-use crate::userconfig::{Change, EventDetails, RemovedEvents};
+use crate::userconfig::{Change, RemovedEvents, Userconfig};
 
-pub fn apply_changes(
-    events: &mut Vec<SoonToBeIcsEvent>,
-    userconfig_events: &HashMap<String, EventDetails>,
-    removed_events: RemovedEvents,
-) {
-    for (name, details) in userconfig_events {
-        for (date, change) in &details.changes {
-            apply_change(events, name, date, change, removed_events);
+pub fn apply_changes(events: &mut Vec<SoonToBeIcsEvent>, userconfig: Userconfig) {
+    for (name, details) in userconfig.events {
+        for (date, change) in details.changes {
+            apply_change(events, &name, date, change, userconfig.removed_events);
         }
     }
 }
@@ -22,19 +16,19 @@ pub fn apply_changes(
 fn apply_change(
     events: &mut Vec<SoonToBeIcsEvent>,
     name: &str,
-    date: &NaiveDateTime,
-    change: &Change,
+    date: NaiveDateTime,
+    change: Change,
     removed_events: RemovedEvents,
 ) {
     if let Some(i) = events
         .iter()
-        .position(|event| event.name == name && event.start_time == *date)
+        .position(|event| event.name == name && event.start_time == date)
     {
         let event = &mut events[i];
         if change.remove {
             match removed_events {
                 RemovedEvents::Cancelled => event.status = EventStatus::Cancelled,
-                RemovedEvents::Emoji => event.pretty_name = format!("🚫 {}", event.pretty_name),
+                RemovedEvents::Emoji => event.pretty_name.insert_str(0, "🚫 "),
                 RemovedEvents::Removed => {
                     events.remove(i);
                     return;
@@ -47,8 +41,8 @@ fn apply_change(
             event.pretty_name += namesuffix;
         }
 
-        if let Some(room) = &change.room {
-            event.location.clone_from(room);
+        if let Some(room) = change.room {
+            event.location = room;
         }
 
         if let Some(time) = change.starttime {
@@ -117,7 +111,7 @@ fn non_existing_event_of_change_is_skipped() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(events.len(), 2);
 
     let expected = generate_events();
@@ -140,7 +134,7 @@ fn remove_event_is_removed_completly() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Removed);
+    apply_change(&mut events, name, date, change, RemovedEvents::Removed);
     assert_eq!(events.len(), 1);
 }
 
@@ -159,7 +153,7 @@ fn remove_event_gets_marked_as_cancelled() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(events.len(), 2);
     assert_eq!(events[1].status, EventStatus::Cancelled);
 }
@@ -179,7 +173,7 @@ fn remove_event_gets_emoji_prefix() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Emoji);
+    apply_change(&mut events, name, date, change, RemovedEvents::Emoji);
     assert_eq!(events.len(), 2);
     assert_eq!(events[1].pretty_name, "🚫 BTI5-VSP/01");
 }
@@ -199,7 +193,7 @@ fn namesuffix_is_added() {
         namesuffix: Some("whatever".to_owned()),
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(events[1].pretty_name, "BTI5-VSP/01 whatever");
 }
 
@@ -218,7 +212,7 @@ fn room_is_overwritten() {
         namesuffix: None,
         room: Some("whereever".to_owned()),
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(events[1].location, "whereever");
 }
 
@@ -237,7 +231,7 @@ fn starttime_changed() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(
         events[1].start_time,
         chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
@@ -262,7 +256,7 @@ fn endtime_changed() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, &date, &change, RemovedEvents::Cancelled);
+    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
     assert_eq!(
         events[1].end_time,
         chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
