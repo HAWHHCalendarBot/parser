@@ -111,7 +111,7 @@ fn can_deserialize_userconfig_with_event_map() -> Result<(), serde_json::Error> 
 
 #[cfg(test)]
 #[track_caller]
-fn deserialize_change(json: &str, expected: &Change) {
+fn case_change(json: &str, expected: &Change) {
     let expected_date = chrono::NaiveDate::from_ymd_opt(2020, 12, 20)
         .unwrap()
         .and_hms_opt(22, 4, 0)
@@ -132,7 +132,7 @@ fn deserialize_change(json: &str, expected: &Change) {
 
 #[test]
 fn can_deserialize_minimal_change() {
-    deserialize_change(
+    case_change(
         "{}",
         &Change {
             remove: false,
@@ -146,7 +146,7 @@ fn can_deserialize_minimal_change() {
 
 #[test]
 fn can_deserialize_change_remove() {
-    deserialize_change(
+    case_change(
         r#"{"remove": true}"#,
         &Change {
             remove: true,
@@ -160,7 +160,7 @@ fn can_deserialize_change_remove() {
 
 #[test]
 fn can_deserialize_change_endtime() {
-    deserialize_change(
+    case_change(
         r#"{"endtime": "23:42:00"}"#,
         &Change {
             remove: false,
