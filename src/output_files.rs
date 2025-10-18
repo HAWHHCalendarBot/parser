@@ -85,13 +85,6 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
         });
     }
 
-    apply_changes(
-        &mut user_events,
-        content.config.changes,
-        content.config.removed_events,
-    )
-    .context("failed to apply changes")?;
-
     for event in &mut user_events {
         if let Some(details) = content.config.events.get(&event.name) {
             apply_details(event, details);
@@ -101,6 +94,8 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
             // skip here and wait for the user to update them in the TelegramBot
         }
     }
+
+    apply_changes(&mut user_events, content.config);
 
     user_events.sort_by_cached_key(|event| event.start_time);
     let ics_content = generate_ics(&first_name, &user_events);

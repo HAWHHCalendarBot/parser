@@ -39,7 +39,7 @@ fn create_event(description: &str) -> SoonToBeIcsEvent {
 fn check_alert(alert_minutes_before: Option<u16>) {
     let details = EventDetails {
         alert_minutes_before,
-        notes: None,
+        ..EventDetails::default()
     };
     let mut event = create_event("");
     apply_details(&mut event, &details);
@@ -57,8 +57,8 @@ fn alert_examples() {
 #[cfg(test)]
 fn check_description(notes: Option<&str>, event_description: &str, expected: &str) {
     let details = EventDetails {
-        alert_minutes_before: None,
         notes: notes.map(ToOwned::to_owned),
+        ..EventDetails::default()
     };
     let mut event = create_event(event_description);
     apply_details(&mut event, &details);
