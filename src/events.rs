@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::generate_ics::{EventStatus, SoonToBeIcsEvent};
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct EventEntry {
     pub name: String,
     pub location: String,
@@ -49,7 +49,7 @@ fn can_deserialize_event_entry() -> Result<(), serde_json::Error> {
     use chrono::NaiveDate;
 
     let test: EventEntry = serde_json::from_str(
-        r#"{"Name": "BTI1-TI", "Location": "1060", "Description": "Dozent: HTM", "StartTime": "2022-01-13T11:40:00", "EndTime": "2022-01-13T12:00:00"}"#,
+        r#"{"name": "BTI1-TI", "location": "1060", "description": "Dozent: HTM", "startTime": "2022-01-13T11:40:00", "endTime": "2022-01-13T12:00:00"}"#,
     )?;
 
     assert_eq!(test.name, "BTI1-TI");
