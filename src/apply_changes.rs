@@ -107,7 +107,7 @@ fn non_existing_event_of_change_is_skipped() {
 }
 
 #[test]
-fn remove_event_is_removed_completly() {
+fn remove_event_is_removed_completely() {
     let mut events = generate_events();
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
@@ -192,10 +192,10 @@ fn room_is_overwritten() {
         starttime: None,
         endtime: None,
         namesuffix: None,
-        room: Some("whereever".to_owned()),
+        room: Some("wherever".to_owned()),
     };
     apply_change(&mut events, date, change, RemovedEvents::Cancelled);
-    assert_eq!(events[1].location, "whereever");
+    assert_eq!(events[1].location, "wherever");
 }
 
 #[test]
