@@ -35,8 +35,7 @@ impl From<EventEntry> for SoonToBeIcsEvent {
         Self {
             start_time: event.start_time,
             end_time: event.end_time,
-            name: event.name.clone(),
-            pretty_name: event.name,
+            name: event.name,
             status: EventStatus::Confirmed,
             alert_minutes_before: None,
             description: event.description,

@@ -13,7 +13,6 @@ pub enum EventStatus {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct SoonToBeIcsEvent {
     pub name: String,
-    pub pretty_name: String,
     pub status: EventStatus,
     pub start_time: NaiveDateTime,
     pub end_time: NaiveDateTime,
@@ -82,7 +81,7 @@ fn event_as_ics_vevent_string(output: &mut String, event: &SoonToBeIcsEvent) {
     _ = writeln!(
         output,
         "SUMMARY:{}",
-        string_to_ical_escaped_text(&event.pretty_name)
+        string_to_ical_escaped_text(&event.name)
     );
     _ = writeln!(
         output,
@@ -183,7 +182,6 @@ fn parse_ics_date() {
 fn create_minimal_event_vevent() {
     let event = SoonToBeIcsEvent {
         name: "BTI5-VS".to_owned(),
-        pretty_name: "BTI5-VS".to_owned(),
         status: EventStatus::Cancelled,
         start_time: chrono::NaiveDate::from_ymd_opt(2020, 8, 22)
             .unwrap()
@@ -202,7 +200,7 @@ fn create_minimal_event_vevent() {
     event_as_ics_vevent_string(&mut result, &event);
     assert_eq!(
         result,
-        "BEGIN:VEVENT\nTRANSP:OPAQUE\nSTATUS:CANCELLED\nSUMMARY:BTI5-VS\nDTSTART;TZID=Europe/Berlin:20200822T083000\nDTEND;TZID=Europe/Berlin:20200822T113000\nURL;VALUE=URI:https://telegram.me/HAWHHCalendarBot\nUID:dbbd48a01ce77b8c@calendarbot.hawhh.de\nEND:VEVENT\n"
+        "BEGIN:VEVENT\nTRANSP:OPAQUE\nSTATUS:CANCELLED\nSUMMARY:BTI5-VS\nDTSTART;TZID=Europe/Berlin:20200822T083000\nDTEND;TZID=Europe/Berlin:20200822T113000\nURL;VALUE=URI:https://telegram.me/HAWHHCalendarBot\nUID:c2238d8b06ddebc8@calendarbot.hawhh.de\nEND:VEVENT\n"
     );
 }
 

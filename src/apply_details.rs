@@ -19,7 +19,6 @@ pub fn apply_details(event: &mut SoonToBeIcsEvent, details: &EventDetails) {
 fn create_event(description: &str) -> SoonToBeIcsEvent {
     SoonToBeIcsEvent {
         name: "BTI5-VSP/01".to_owned(),
-        pretty_name: "BTI5-VSP/01".to_owned(),
         status: crate::generate_ics::EventStatus::Confirmed,
         start_time: chrono::NaiveDate::from_ymd_opt(2020, 4, 2)
             .unwrap()

@@ -16,7 +16,7 @@ pub fn apply_change(
         if change.remove {
             match removed_events {
                 RemovedEvents::Cancelled => event.status = EventStatus::Cancelled,
-                RemovedEvents::Emoji => event.pretty_name.insert_str(0, "🚫 "),
+                RemovedEvents::Emoji => event.name.insert_str(0, "🚫 "),
                 RemovedEvents::Removed => {
                     events.remove(i);
                     return;
@@ -25,8 +25,8 @@ pub fn apply_change(
         }
 
         if let Some(namesuffix) = &change.namesuffix {
-            event.pretty_name += " ";
-            event.pretty_name += namesuffix;
+            event.name += " ";
+            event.name += namesuffix;
         }
 
         if let Some(room) = change.room {
@@ -51,7 +51,6 @@ fn generate_events() -> Vec<SoonToBeIcsEvent> {
     vec![
         SoonToBeIcsEvent {
             name: "BTI5-VSP/01".to_owned(),
-            pretty_name: "BTI5-VSP/01".to_owned(),
             status: EventStatus::Confirmed,
             start_time: chrono::NaiveDate::from_ymd_opt(2020, 4, 2)
                 .unwrap()
@@ -67,7 +66,6 @@ fn generate_events() -> Vec<SoonToBeIcsEvent> {
         },
         SoonToBeIcsEvent {
             name: "BTI5-VSP/01".to_owned(),
-            pretty_name: "BTI5-VSP/01".to_owned(),
             status: EventStatus::Confirmed,
             start_time: chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
                 .unwrap()
@@ -159,7 +157,7 @@ fn remove_event_gets_emoji_prefix() {
     };
     apply_change(&mut events, date, change, RemovedEvents::Emoji);
     assert_eq!(events.len(), 2);
-    assert_eq!(events[1].pretty_name, "🚫 BTI5-VSP/01");
+    assert_eq!(events[1].name, "🚫 BTI5-VSP/01");
 }
 
 #[test]
@@ -177,7 +175,7 @@ fn namesuffix_is_added() {
         room: None,
     };
     apply_change(&mut events, date, change, RemovedEvents::Cancelled);
-    assert_eq!(events[1].pretty_name, "BTI5-VSP/01 whatever");
+    assert_eq!(events[1].name, "BTI5-VSP/01 whatever");
 }
 
 #[test]
