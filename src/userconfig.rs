@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::{NaiveDateTime, NaiveTime};
+use indexmap::IndexMap;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -40,7 +41,8 @@ pub struct EventDetails {
 pub struct Userconfig {
     pub calendarfile_suffix: String,
 
-    pub events: HashMap<String, EventDetails>,
+    /// key is the filename (without .json)
+    pub events: IndexMap<String, EventDetails>,
 
     #[serde(default)]
     pub removed_events: RemovedEvents,
@@ -102,9 +104,9 @@ fn can_deserialize_userconfig_with_event_map() -> Result<(), serde_json::Error> 
     assert_eq!(test.calendarfile_suffix, "123qwe");
     assert_eq!(test.removed_events, RemovedEvents::Removed);
 
-    let mut events = test.events.keys().collect::<Vec<_>>();
-    events.sort();
-    assert_eq!(events, ["BTI1-TI", "BTI5-VS"]);
+    let mut event_filenames = test.events.keys().collect::<Vec<_>>();
+    event_filenames.sort();
+    assert_eq!(event_filenames, ["BTI1-TI", "BTI5-VS"]);
 
     Ok(())
 }
@@ -117,12 +119,12 @@ fn case_change(json: &str, expected: &Change) {
         .and_hms_opt(22, 4, 0)
         .unwrap();
     let config = serde_json::from_str::<Userconfig>(
-       & r#"{"calendarfileSuffix": "123qwe", "events": {"Fancy Event Name": {"changes": {"2020-12-20T22:04:00": {}}}}}"#.replace("{}", json),
+       & r#"{"calendarfileSuffix": "123qwe", "events": {"event-filename": {"changes": {"2020-12-20T22:04:00": {}}}}}"#.replace("{}", json),
     ).expect("should be able to parse json to userconfig");
     dbg!(&config);
     let actual = config
         .events
-        .get("Fancy Event Name")
+        .get("event-filename")
         .expect("event should exist")
         .changes
         .get(&expected_date)

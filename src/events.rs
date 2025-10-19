@@ -19,9 +19,10 @@ pub struct EventEntry {
 
 pub const FOLDER: &str = "eventfiles";
 
-pub fn read(name: &str) -> anyhow::Result<Vec<EventEntry>> {
-    let filename = name.replace('/', "-");
-    let path = Path::new(FOLDER).join(filename + ".json");
+pub fn read(filename: &str) -> anyhow::Result<Vec<EventEntry>> {
+    let filename = filename.replace('/', "-"); // historically the filename was the name with replaced /. Probably not needed anymore
+    let mut path = Path::new(FOLDER).join(filename);
+    path.set_extension("json");
     let content = fs::read_to_string(path).context("failed to read")?;
     let event_entries: Vec<EventEntry> =
         serde_json::from_str(&content).context("failed to parse")?;

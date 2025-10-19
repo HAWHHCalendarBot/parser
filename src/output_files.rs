@@ -3,12 +3,12 @@ use std::path::Path;
 
 use anyhow::Context as _;
 
-use crate::apply_changes::apply_changes;
+use crate::apply_changes::apply_change;
 use crate::apply_details::apply_details;
 use crate::changestatus::{Changestatus, Changetype};
 use crate::events;
 use crate::generate_ics::{SoonToBeIcsEvent, generate_ics};
-use crate::userconfig::UserconfigFile;
+use crate::userconfig::{EventDetails, RemovedEvents, UserconfigFile};
 
 pub struct Buildresult {
     pub changestatus: Changestatus,
@@ -59,12 +59,10 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
     }
 
     let mut user_events = Vec::new();
-    let mut event_keys = content.config.events.keys().collect::<Vec<_>>();
-    event_keys.sort();
-    for name in event_keys {
-        match load_and_parse_events(name) {
+    for (filename, details) in content.config.events {
+        match load_and_parse_events(&filename, details, content.config.removed_events) {
             Ok(mut events) => user_events.append(&mut events),
-            Err(err) => println!("skip event {name:32} {err:#}"),
+            Err(err) => println!("skip eventfile {filename:32} {err:#}"),
         }
     }
 
@@ -84,18 +82,6 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
             },
         });
     }
-
-    for event in &mut user_events {
-        if let Some(details) = content.config.events.get(&event.name) {
-            apply_details(event, details);
-        } else {
-            // IE changed from IE2-IC/01 to IE2-IC-01 for ics files
-            // the old name was used and is not yet updated in the TelegramBot
-            // skip here and wait for the user to update them in the TelegramBot
-        }
-    }
-
-    apply_changes(&mut user_events, content.config);
 
     user_events.sort_by_cached_key(|event| event.start_time);
     let ics_content = generate_ics(&first_name, &user_events);
@@ -121,10 +107,19 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
     })
 }
 
-fn load_and_parse_events(name: &str) -> anyhow::Result<Vec<SoonToBeIcsEvent>> {
+fn load_and_parse_events(
+    event_filename: &str,
+    details: EventDetails,
+    removed_events: RemovedEvents,
+) -> anyhow::Result<Vec<SoonToBeIcsEvent>> {
     let mut result = Vec::new();
-    for event in events::read(name)? {
-        result.push(event.into());
+    for event in events::read(event_filename)? {
+        let mut event = event.into();
+        apply_details(&mut event, &details);
+        result.push(event);
+    }
+    for (date, change) in details.changes {
+        apply_change(&mut result, date, change, removed_events);
     }
     Ok(result)
 }

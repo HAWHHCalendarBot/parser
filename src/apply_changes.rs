@@ -3,27 +3,15 @@
 use chrono::NaiveDateTime;
 
 use crate::generate_ics::{EventStatus, SoonToBeIcsEvent};
-use crate::userconfig::{Change, RemovedEvents, Userconfig};
+use crate::userconfig::{Change, RemovedEvents};
 
-pub fn apply_changes(events: &mut Vec<SoonToBeIcsEvent>, userconfig: Userconfig) {
-    for (name, details) in userconfig.events {
-        for (date, change) in details.changes {
-            apply_change(events, &name, date, change, userconfig.removed_events);
-        }
-    }
-}
-
-fn apply_change(
+pub fn apply_change(
     events: &mut Vec<SoonToBeIcsEvent>,
-    name: &str,
     date: NaiveDateTime,
     change: Change,
     removed_events: RemovedEvents,
 ) {
-    if let Some(i) = events
-        .iter()
-        .position(|event| event.name == name && event.start_time == date)
-    {
+    if let Some(i) = events.iter().position(|event| event.start_time == date) {
         let event = &mut events[i];
         if change.remove {
             match removed_events {
@@ -99,7 +87,6 @@ fn generate_events() -> Vec<SoonToBeIcsEvent> {
 #[test]
 fn non_existing_event_of_change_is_skipped() {
     let mut events = generate_events();
-    let name = "BTI5-VS";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 15)
         .unwrap()
         .and_hms_opt(13, 37, 0)
@@ -111,7 +98,7 @@ fn non_existing_event_of_change_is_skipped() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(events.len(), 2);
 
     let expected = generate_events();
@@ -122,7 +109,6 @@ fn non_existing_event_of_change_is_skipped() {
 #[test]
 fn remove_event_is_removed_completly() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -134,14 +120,13 @@ fn remove_event_is_removed_completly() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Removed);
+    apply_change(&mut events, date, change, RemovedEvents::Removed);
     assert_eq!(events.len(), 1);
 }
 
 #[test]
 fn remove_event_gets_marked_as_cancelled() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -153,7 +138,7 @@ fn remove_event_gets_marked_as_cancelled() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(events.len(), 2);
     assert_eq!(events[1].status, EventStatus::Cancelled);
 }
@@ -161,7 +146,6 @@ fn remove_event_gets_marked_as_cancelled() {
 #[test]
 fn remove_event_gets_emoji_prefix() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -173,7 +157,7 @@ fn remove_event_gets_emoji_prefix() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Emoji);
+    apply_change(&mut events, date, change, RemovedEvents::Emoji);
     assert_eq!(events.len(), 2);
     assert_eq!(events[1].pretty_name, "🚫 BTI5-VSP/01");
 }
@@ -181,7 +165,6 @@ fn remove_event_gets_emoji_prefix() {
 #[test]
 fn namesuffix_is_added() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -193,14 +176,13 @@ fn namesuffix_is_added() {
         namesuffix: Some("whatever".to_owned()),
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(events[1].pretty_name, "BTI5-VSP/01 whatever");
 }
 
 #[test]
 fn room_is_overwritten() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -212,14 +194,13 @@ fn room_is_overwritten() {
         namesuffix: None,
         room: Some("whereever".to_owned()),
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(events[1].location, "whereever");
 }
 
 #[test]
 fn starttime_changed() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -231,7 +212,7 @@ fn starttime_changed() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(
         events[1].start_time,
         chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
@@ -244,7 +225,6 @@ fn starttime_changed() {
 #[test]
 fn endtime_changed() {
     let mut events = generate_events();
-    let name = "BTI5-VSP/01";
     let date = chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
         .unwrap()
         .and_hms_opt(8, 15, 0)
@@ -256,7 +236,7 @@ fn endtime_changed() {
         namesuffix: None,
         room: None,
     };
-    apply_change(&mut events, name, date, change, RemovedEvents::Cancelled);
+    apply_change(&mut events, date, change, RemovedEvents::Cancelled);
     assert_eq!(
         events[1].end_time,
         chrono::NaiveDate::from_ymd_opt(2020, 5, 14)
