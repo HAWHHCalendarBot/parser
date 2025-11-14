@@ -52,7 +52,7 @@ pub fn write_change_summary<W: std::io::Write>(
         if let Some(val) = map.get_mut(key) {
             val.sort_by_key(|string| string.to_lowercase());
             let key = key.as_str();
-            writeln!(target, "{key:7} ({:3}): {val:?}", val.len())?;
+            writeln!(target, "{key:7} ({:4}): {val:?}", val.len())?;
         }
     }
     Ok(())
@@ -99,14 +99,15 @@ fn summary_without_changes_is_empty() {
 fn summary_shows_every_type_once() {
     let mut result = Vec::new();
     write_change_summary(&mut result, generate_every_type_once(), Changetype::ALL).unwrap();
+    let result = String::from_utf8(result).unwrap();
     assert_eq!(
         result,
-        br#"added   (  1): ["A"]
-changed (  1): ["C"]
-moved   (  1): ["M"]
-removed (  1): ["R"]
-same    (  1): ["Sa"]
-skipped (  1): ["Sk"]
+        r#"added   (   1): ["A"]
+changed (   1): ["C"]
+moved   (   1): ["M"]
+removed (   1): ["R"]
+same    (   1): ["Sa"]
+skipped (   1): ["Sk"]
 "#
     );
 }
@@ -120,12 +121,13 @@ fn summary_shows_interesting_types_once() {
         Changetype::INTERESTING,
     )
     .unwrap();
+    let result = String::from_utf8(result).unwrap();
     assert_eq!(
         result,
-        br#"added   (  1): ["A"]
-changed (  1): ["C"]
-moved   (  1): ["M"]
-removed (  1): ["R"]
+        r#"added   (   1): ["A"]
+changed (   1): ["C"]
+moved   (   1): ["M"]
+removed (   1): ["R"]
 "#
     );
 }
