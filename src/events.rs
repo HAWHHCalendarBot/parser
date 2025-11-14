@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 use anyhow::Context as _;
 use chrono::NaiveDateTime;
@@ -19,9 +20,32 @@ pub struct EventEntry {
 
 pub const FOLDER: &str = "eventfiles";
 
+pub fn pull() {
+    if Path::new(FOLDER).join(".git").exists() {
+        let status = Command::new("git")
+            .args(["pull", "--ff-only"])
+            .current_dir(FOLDER)
+            .status()
+            .expect("git process should execute");
+        assert!(status.success(), "git pull status code {status}");
+    } else {
+        let status = Command::new("git")
+            .args([
+                "clone",
+                "-q",
+                "--depth",
+                "1",
+                "https://github.com/HAWHHCalendarBot/eventfiles.git",
+                FOLDER,
+            ])
+            .status()
+            .expect("git process should execute");
+        assert!(status.success(), "git clone status code {status}");
+    }
+}
+
 pub fn read(filename: &str) -> anyhow::Result<Vec<EventEntry>> {
-    let filename = filename.replace('/', "-"); // historically the filename was the name with replaced /. Probably not needed anymore
-    let mut path = Path::new(FOLDER).join(filename);
+    let mut path = Path::new(FOLDER).join("events").join(filename);
     path.set_extension("json");
     let content = fs::read_to_string(path).context("failed to read")?;
     let event_entries: Vec<EventEntry> =

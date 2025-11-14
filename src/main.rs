@@ -1,5 +1,5 @@
 use std::thread::sleep;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::changestatus::{Changestatus, Changetype, write_change_summary};
 use crate::watchcat::Watchcat;
@@ -17,31 +17,34 @@ mod watchcat;
 fn main() {
     output_files::ensure_directory().expect("should be able to create output directory");
     let mut stdout = std::io::stdout();
+
+    println!("Pull eventfiles...");
+    events::pull();
     println!("Begin build all configs...");
 
-    let all = userconfigs::load_all();
-    let changes = output_files::all_remove_rest(all)
+    let changes = output_files::all_remove_rest(userconfigs::load_all())
         .expect("should be able to build all initial userconfigs");
     _ = write_change_summary(&mut stdout, changes, Changetype::ALL);
 
     println!("Finished building all configs. Engage watchcats...\n");
-
-    let event_watcher = Watchcat::new(events::FOLDER);
+    let mut last_eventfiles_pull = Instant::now();
     let userconfig_watcher = Watchcat::new(userconfigs::FOLDER);
 
     loop {
-        let mut event_changes = event_watcher.get_changed_filenames();
-        if !event_changes.is_empty() {
-            println!("eventfile change detected... ");
-            event_changes.append(&mut event_watcher.get_changed_filenames());
-            println!("changed ({:3}): {event_changes:?}", event_changes.len());
+        if last_eventfiles_pull.elapsed() > Duration::from_mins(42) {
+            println!("\nPull eventfiles...");
+            events::pull();
+            println!("Begin build all configs...");
 
-            match do_all() {
+            match output_files::all_remove_rest(userconfigs::load_all()) {
                 Ok(changes) => {
                     _ = write_change_summary(&mut stdout, changes, Changetype::INTERESTING);
                 }
                 Err(err) => println!("failed to build all {err:#}"),
             }
+
+            println!("Finished building all configs.\n");
+            last_eventfiles_pull = Instant::now();
         }
 
         for filename in userconfig_watcher.get_changed_filenames() {
@@ -54,11 +57,6 @@ fn main() {
 
         sleep(Duration::from_secs(5));
     }
-}
-
-fn do_all() -> anyhow::Result<Vec<Changestatus>> {
-    let all = userconfigs::load_all();
-    output_files::all_remove_rest(all)
 }
 
 fn do_specific(userconfig_filename: &str) -> anyhow::Result<Changestatus> {

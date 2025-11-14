@@ -60,6 +60,10 @@ fn one_internal(content: UserconfigFile) -> anyhow::Result<Buildresult> {
 
     let mut user_events = Vec::new();
     for (filename, details) in content.config.events {
+        if filename.contains(char::is_uppercase) {
+            // Ignore legacy filenames
+            continue;
+        }
         match load_and_parse_events(&filename, details, content.config.removed_events) {
             Ok(mut events) => user_events.append(&mut events),
             Err(err) => println!("skip eventfile {filename:32} {err:#}"),
