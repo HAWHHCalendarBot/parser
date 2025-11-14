@@ -20,6 +20,7 @@ RUN cargo build --release --locked --offline
 FROM docker.io/library/debian:trixie-slim AS final
 RUN apt-get update \
 	&& apt-get upgrade -y \
+	&& apt-get install -y git \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/* /var/log/*
 
