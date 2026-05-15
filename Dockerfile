@@ -22,7 +22,9 @@ RUN apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y git \
 	&& apt-get clean \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/* /var/log/*
+	&& groupadd --system --gid 923 runner \
+	&& useradd --system --uid 923 --gid 923 --create-home runner \
+	&& rm -rf /etc/*- /var/lib/apt/lists/* /var/cache/* /var/log/*
 
 WORKDIR /app
 VOLUME /app/calendars
@@ -30,4 +32,6 @@ VOLUME /app/eventfiles
 VOLUME /app/userconfig
 
 COPY --from=builder /build/target/release/hawhh-calendarbot-parser /usr/local/bin/
+
+USER runner
 ENTRYPOINT ["hawhh-calendarbot-parser"]
