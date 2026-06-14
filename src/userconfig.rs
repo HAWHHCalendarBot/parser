@@ -2,21 +2,20 @@ use std::collections::HashMap;
 
 use chrono::{NaiveDateTime, NaiveTime};
 use indexmap::IndexMap;
-use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub struct UserconfigFile {
     pub chat: Chat,
     pub config: Userconfig,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Chat {
     pub id: i64,
     pub first_name: String,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum RemovedEvents {
     #[default]
@@ -25,7 +24,7 @@ pub enum RemovedEvents {
     Emoji,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EventDetails {
     #[serde(default)]
@@ -36,7 +35,7 @@ pub struct EventDetails {
     pub notes: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Userconfig {
     pub calendarfile_suffix: String,
@@ -48,7 +47,7 @@ pub struct Userconfig {
     pub removed_events: RemovedEvents,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Change {
     #[serde(default)]

@@ -4,11 +4,10 @@ use std::process::Command;
 
 use anyhow::Context as _;
 use chrono::NaiveDateTime;
-use serde::Deserialize;
 
 use crate::generate_ics::{EventStatus, SoonToBeIcsEvent};
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EventEntry {
     pub name: String,
